@@ -6,7 +6,7 @@ import { useAuthStore } from '@/src/frontend/store/use-auth-store';
 import { useAuth } from '@/src/frontend/hooks/use-auth';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuthStore();
+  const { user, isLoading, requiresPasswordChange } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   
@@ -14,10 +14,16 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   useAuth();
 
   useEffect(() => {
-    if (!isLoading && !user && !pathname.startsWith('/login') && !pathname.startsWith('/reset-password')) {
-      router.push('/login');
+    if (!isLoading) {
+      if (!user && !pathname.startsWith('/login') && !pathname.startsWith('/reset-password')) {
+        router.push('/login');
+      } else if (user && requiresPasswordChange && !pathname.startsWith('/change-password')) {
+        router.push('/change-password');
+      } else if (user && !requiresPasswordChange && pathname.startsWith('/change-password')) {
+        router.push('/dashboard');
+      }
     }
-  }, [user, isLoading, router, pathname]);
+  }, [user, isLoading, requiresPasswordChange, router, pathname]);
 
   if (isLoading) {
     return (
@@ -28,6 +34,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!user && !pathname.startsWith('/login') && !pathname.startsWith('/reset-password')) {
+    return null;
+  }
+
+  if (user && requiresPasswordChange && !pathname.startsWith('/change-password')) {
     return null;
   }
 

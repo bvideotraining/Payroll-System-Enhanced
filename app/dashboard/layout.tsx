@@ -13,11 +13,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="min-h-screen bg-gray-50">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         
-        <div className="lg:pl-64 flex flex-col min-h-screen">
+        <div className="lg:pl-44 flex flex-col min-h-screen">
           <Header setSidebarOpen={setSidebarOpen} />
           
           <main className="flex-1">
-            <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div className="px-1 py-2 sm:px-2 lg:px-3 max-w-4xl mx-auto">
               {children}
             </div>
           </main>

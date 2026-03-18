@@ -1,0 +1,221 @@
+{
+  "entities": {
+    "Branch": {
+      "title": "Branch",
+      "description": "An organization branch location",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the branch" }
+      },
+      "required": ["name"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "An organization department",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the department" },
+        "type": { "type": "string", "enum": ["Academic", "Administrative", "Support"], "description": "Type of department" }
+      },
+      "required": ["name", "type"]
+    },
+    "JobTitle": {
+      "title": "Job Title",
+      "description": "An employee job title",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The job title" },
+        "type": { "type": "string", "enum": ["Full-time", "Part-time", "Contract"], "description": "Employment type" },
+        "departmentId": { "type": "string", "description": "ID of the department" }
+      },
+      "required": ["title", "type", "departmentId"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "An employee record",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "employeeCode": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "branch": { "type": "string" },
+        "department": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "category": { "type": "string" },
+        "joinDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["Active", "Inactive", "On Leave"] }
+      },
+      "required": ["fullName", "employeeCode", "branch", "department", "jobTitle", "status"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "An attendance log entry",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "checkIn": { "type": "string" },
+        "checkOut": { "type": "string" },
+        "status": { "type": "string", "enum": ["Present", "Absent", "Late", "Half-day"] },
+        "lateMinutes": { "type": "number" }
+      },
+      "required": ["employeeId", "date", "status"]
+    },
+    "SalaryConfig": {
+      "title": "Salary Configuration",
+      "description": "Salary details for an employee",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "basicSalary": { "type": "number" },
+        "allowances": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "amount": { "type": "number" }
+            }
+          }
+        },
+        "deductions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "amount": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["employeeId", "basicSalary"]
+    },
+    "CashAdvance": {
+      "title": "Cash Advance",
+      "description": "A cash advance request or record",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "amount": { "type": "number" },
+        "requestDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected", "Paid"] },
+        "reason": { "type": "string" },
+        "repaymentMonth": { "type": "string", "description": "The month range ID for repayment" }
+      },
+      "required": ["employeeId", "amount", "requestDate", "status"]
+    },
+    "Payroll": {
+      "title": "Payroll",
+      "description": "A generated payroll record",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "monthRangeId": { "type": "string" },
+        "basicSalary": { "type": "number" },
+        "totalAllowances": { "type": "number" },
+        "totalDeductions": { "type": "number" },
+        "attendancePenalties": { "type": "number" },
+        "cashAdvanceDeduction": { "type": "number" },
+        "bonus": { "type": "number" },
+        "netSalary": { "type": "number" },
+        "status": { "type": "string", "enum": ["Draft", "Published", "Paid"] },
+        "generatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["employeeId", "monthRangeId", "netSalary", "status"]
+    },
+    "Leave": {
+      "title": "Leave",
+      "description": "A leave request",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "leaveType": { "type": "string", "enum": ["Annual", "Casual", "Sick", "Maternity", "Unpaid", "Death", "Lieu"] },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "duration": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"] },
+        "attachmentUrl": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["employeeId", "leaveType", "startDate", "endDate", "duration", "status"]
+    },
+    "LeaveBalance": {
+      "title": "Leave Balance",
+      "description": "Leave balance for an employee",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "annual": { "type": "number" },
+        "casual": { "type": "number" },
+        "sick": { "type": "number" },
+        "maternity": { "type": "number" },
+        "unpaid": { "type": "number" },
+        "death": { "type": "number" },
+        "lieu": { "type": "number" },
+        "year": { "type": "number" }
+      },
+      "required": ["employeeId", "annual", "casual", "sick", "maternity", "unpaid", "death", "lieu", "year"]
+    },
+    "AppUser": {
+      "title": "Application User",
+      "description": "A user account for the application",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "requiresPasswordChange": { "type": "boolean" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["email", "role", "status"]
+    },
+    "AppRole": {
+      "title": "Application Role",
+      "description": "A custom role for the application",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "permissions": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name"]
+    },
+    "SystemConfig": {
+      "title": "System Configuration",
+      "description": "Global system settings",
+      "type": "object",
+      "properties": {
+        "currency": { "type": "string" },
+        "standardWorkingHours": { "type": "number" },
+        "weekendDays": { "type": "array", "items": { "type": "number" } },
+        "autoLeaveApproval": { "type": "boolean" }
+      },
+      "required": ["currency", "standardWorkingHours", "weekendDays", "autoLeaveApproval"]
+    }
+  },
+  "firestore": {
+    "branches": { "schema": "Branch", "description": "Branches collection" },
+    "departments": { "schema": "Department", "description": "Departments collection" },
+    "jobTitles": { "schema": "JobTitle", "description": "Job Titles collection" },
+    "employees": { "schema": "Employee", "description": "Employees collection" },
+    "attendance": { "schema": "Attendance", "description": "Attendance logs" },
+    "salaryConfigs": { "schema": "SalaryConfig", "description": "Salary configurations" },
+    "cashAdvances": { "schema": "CashAdvance", "description": "Cash advance records" },
+    "payrolls": { "schema": "Payroll", "description": "Generated payrolls" },
+    "bonuses": { "schema": { "type": "object" }, "description": "Bonuses" },
+    "roles": { "schema": "AppRole", "description": "Custom roles" },
+    "leaves": { "schema": "Leave", "description": "Leave requests" },
+    "leaveBalances": { "schema": "LeaveBalance", "description": "Leave balances" },
+    "monthRanges": { "schema": { "type": "object" }, "description": "Month ranges for payroll" },
+    "attendanceRules": { "schema": { "type": "object" }, "description": "Attendance rules" },
+    "organization": { "schema": { "type": "object" }, "description": "Organization settings" },
+    "users": { "schema": "AppUser", "description": "Application users" },
+    "system": { "schema": "SystemConfig", "description": "System configuration" }
+  }
+}

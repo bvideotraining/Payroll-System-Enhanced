@@ -1,0 +1,153 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: branches
+    // Fields: name (string)
+    //
+    // Collection: departments
+    // Fields: name (string), type (string)
+    //
+    // Collection: jobTitles
+    // Fields: title (string), type (string), departmentId (string)
+    //
+    // Collection: employees
+    // Fields: fullName, employeeCode, email, phone, branch, department, jobTitle, category, joinDate, status
+    //
+    // Collection: attendance
+    // Fields: employeeId, date, checkIn, checkOut, status, lateMinutes
+    //
+    // Collection: salaryConfigs
+    // Fields: employeeId, basicSalary, allowances (list of maps), deductions (list of maps)
+    //
+    // Collection: cashAdvances
+    // Fields: employeeId, amount, requestDate, status, reason, repaymentMonth
+    //
+    // Collection: payrolls
+    // Fields: employeeId, monthRangeId, basicSalary, totalAllowances, totalDeductions, attendancePenalties, cashAdvanceDeduction, bonus, netSalary, status, generatedAt
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "bvideotraining@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users collection for roles
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isOwner(userId) && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['requiresPasswordChange', 'updatedAt']) &&
+        request.resource.data.requiresPasswordChange == false
+      );
+    }
+
+    match /roles/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Organization collections
+    match /branches/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /departments/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /jobTitles/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /monthRanges/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /attendanceRules/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /organization/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /system/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Employee and related data
+    match /employees/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /attendance/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /salaryConfigs/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /cashAdvances/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || (isAuthenticated() && request.resource.data.employeeId == request.auth.uid);
+    }
+    match /payrolls/{id} {
+      allow read: if isAuthenticated(); // Employees can see their own, admins see all. Logic simplified for now.
+      allow write: if isAdmin();
+    }
+    match /bonuses/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /leaves/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    match /leaveBalances/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    match /social_insurances/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /medical_insurances/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

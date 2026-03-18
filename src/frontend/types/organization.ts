@@ -34,6 +34,10 @@ export interface AttendanceRule {
   categoryName: string;
   startTime: string;
   type: AttendanceType;
+  gracePeriodMinutes: number;
+  lateDeductionStepMinutes: number;
+  lateDeductionDaysPerStep: number;
+  absenceDeductionDays: number;
 }
 
 export interface Branding {

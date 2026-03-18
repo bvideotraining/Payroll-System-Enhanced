@@ -3,13 +3,13 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCzVUkKOk4XckuhiDdki0iBCw6TAtRs5Q4",
-  authDomain: "payroll-system-enhanced.firebaseapp.com",
-  projectId: "payroll-system-enhanced",
-  storageBucket: "payroll-system-enhanced.firebasestorage.app",
-  messagingSenderId: "103191711655",
-  appId: "1:103191711655:web:08b7eae398882e96e87082",
+export const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCzVUkKOk4XckuhiDdki0iBCw6TAtRs5Q4",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "payroll-system-enhanced.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "payroll-system-enhanced",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "payroll-system-enhanced.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "103191711655",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:103191711655:web:08b7eae398882e96e87082",
 };
 
 // Initialize Firebase only if it hasn't been initialized already

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
 import { 
   collection, 
@@ -17,9 +18,7 @@ export function useWeeklyAttendance(startDate: string, endDate: string) {
 
   useEffect(() => {
     if (!user || !startDate || !endDate) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecords([]);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }

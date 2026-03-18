@@ -1,7 +1,9 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
 import { collection, doc, onSnapshot, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Branch, Department, JobTitle, Branding, MonthRange, AttendanceRule } from '../types/organization';
+import { useAuthStore } from '../store/use-auth-store';
 
 const initialBranding: Branding = {
   appName: "Enterprise HR",
@@ -17,26 +19,39 @@ export function useOrganization() {
   const [branding, setBranding] = useState<Branding>(initialBranding);
   const [loading, setLoading] = useState(true);
 
+  const { user } = useAuthStore();
+
   useEffect(() => {
+    if (!user) {
+      setBranches([]);
+      setDepartments([]);
+      setJobTitles([]);
+      setMonthRanges([]);
+      setAttendanceRules([]);
+      setBranding(initialBranding);
+      setLoading(false);
+      return;
+    }
+
     const unsubBranches = onSnapshot(collection(db, 'branches'), (snapshot) => {
       setBranches(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Branch)));
-    });
+    }, (error) => console.error("Error fetching branches:", error));
 
     const unsubDepartments = onSnapshot(collection(db, 'departments'), (snapshot) => {
       setDepartments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Department)));
-    });
+    }, (error) => console.error("Error fetching departments:", error));
 
     const unsubJobTitles = onSnapshot(collection(db, 'jobTitles'), (snapshot) => {
       setJobTitles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JobTitle)));
-    });
+    }, (error) => console.error("Error fetching jobTitles:", error));
 
     const unsubMonthRanges = onSnapshot(collection(db, 'monthRanges'), (snapshot) => {
       setMonthRanges(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MonthRange)));
-    });
+    }, (error) => console.error("Error fetching monthRanges:", error));
 
     const unsubAttendanceRules = onSnapshot(collection(db, 'attendanceRules'), (snapshot) => {
       setAttendanceRules(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRule)));
-    });
+    }, (error) => console.error("Error fetching attendanceRules:", error));
 
     const unsubBranding = onSnapshot(doc(db, 'organization', 'branding'), (docSnap) => {
       if (docSnap.exists()) {
@@ -44,6 +59,9 @@ export function useOrganization() {
       } else {
         setBranding(initialBranding);
       }
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching branding:", error);
       setLoading(false);
     });
 
@@ -55,7 +73,7 @@ export function useOrganization() {
       unsubAttendanceRules();
       unsubBranding();
     };
-  }, []);
+  }, [user]);
 
   const addBranch = async (name: string) => {
     const id = Date.now().toString();
@@ -101,12 +119,45 @@ export function useOrganization() {
     await deleteDoc(doc(db, 'monthRanges', id));
   };
 
-  const addAttendanceRule = async (categoryName: string, startTime: string, type: AttendanceRule['type']) => {
+  const addAttendanceRule = async (
+    categoryName: string, 
+    startTime: string, 
+    type: AttendanceRule['type'], 
+    gracePeriodMinutes: number = 60,
+    lateDeductionStepMinutes: number = 60,
+    lateDeductionDaysPerStep: number = 1,
+    absenceDeductionDays: number = 1
+  ) => {
     const id = Date.now().toString();
-    await setDoc(doc(db, 'attendanceRules', id), { categoryName, startTime, type });
+    await setDoc(doc(db, 'attendanceRules', id), { 
+      categoryName, 
+      startTime, 
+      type, 
+      gracePeriodMinutes, 
+      lateDeductionStepMinutes, 
+      lateDeductionDaysPerStep, 
+      absenceDeductionDays 
+    });
   };
-  const updateAttendanceRule = async (id: string, categoryName: string, startTime: string, type: AttendanceRule['type']) => {
-    await setDoc(doc(db, 'attendanceRules', id), { categoryName, startTime, type }, { merge: true });
+  const updateAttendanceRule = async (
+    id: string, 
+    categoryName: string, 
+    startTime: string, 
+    type: AttendanceRule['type'], 
+    gracePeriodMinutes: number,
+    lateDeductionStepMinutes: number,
+    lateDeductionDaysPerStep: number,
+    absenceDeductionDays: number
+  ) => {
+    await setDoc(doc(db, 'attendanceRules', id), { 
+      categoryName, 
+      startTime, 
+      type, 
+      gracePeriodMinutes, 
+      lateDeductionStepMinutes, 
+      lateDeductionDaysPerStep, 
+      absenceDeductionDays 
+    }, { merge: true });
   };
   const deleteAttendanceRule = async (id: string) => {
     await deleteDoc(doc(db, 'attendanceRules', id));
