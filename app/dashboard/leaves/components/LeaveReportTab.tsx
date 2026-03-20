@@ -5,13 +5,15 @@ import { useLeaves } from '@/src/frontend/hooks/use-leaves';
 import { useEmployees } from '@/src/frontend/hooks/use-employees';
 import { useOrganization } from '@/src/frontend/hooks/use-organization';
 import { Button } from '@/src/frontend/components/ui/button';
-import { Download, BarChart2, FileText, ChevronDown } from 'lucide-react';
+import { Download, BarChart2, FileText, ChevronDown, Edit2, Trash2 } from 'lucide-react';
+import { LeaveRequestModal } from './LeaveRequestModal';
+import { LeaveRequest } from '@/src/frontend/types/leave';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export function LeaveReportTab() {
-  const { leaves, balances } = useLeaves();
+  const { leaves, balances, deleteLeave } = useLeaves();
   const { employees } = useEmployees();
   const { branches } = useOrganization();
 
@@ -20,10 +22,25 @@ export function LeaveReportTab() {
   const [selectedEmployee, setSelectedEmployee] = useState('All Employees');
   const [selectedType, setSelectedType] = useState('All Types');
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLeave, setEditingLeave] = useState<LeaveRequest | undefined>(undefined);
+  const [leaveToDelete, setLeaveToDelete] = useState<string | null>(null);
 
   const approvedLeaves = useMemo(() => {
     return leaves.filter(l => l.status === 'Approved');
   }, [leaves]);
+
+  const handleEdit = (leave: LeaveRequest) => {
+    setEditingLeave(leave);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (leaveToDelete) {
+      await deleteLeave(leaveToDelete);
+      setLeaveToDelete(null);
+    }
+  };
 
   const filteredLeaves = useMemo(() => {
     return approvedLeaves.filter(leave => {
@@ -217,12 +234,13 @@ export function LeaveReportTab() {
                 <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Dates</th>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Duration</th>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Rem. Bal (Year End)</th>
+                <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
               {filteredLeaves.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500">
                     <BarChart2 className="h-8 w-8 mx-auto text-slate-300 mb-2" />
                     No approved leave records found for the selected criteria.
                   </td>
@@ -257,6 +275,16 @@ export function LeaveReportTab() {
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-slate-700">
                         {remBal}
                       </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => handleEdit(leave)} className="text-blue-600 hover:text-blue-800 transition-colors">
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => setLeaveToDelete(leave.id)} className="text-red-600 hover:text-red-800 transition-colors">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })
@@ -265,6 +293,32 @@ export function LeaveReportTab() {
           </table>
         </div>
       </div>
+
+      <LeaveRequestModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        employee={undefined}
+        employees={employees}
+        isAdmin={true}
+        record={editingLeave}
+      />
+
+      {leaveToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden p-4 space-y-4">
+            <h3 className="text-sm font-semibold text-slate-900">Delete Leave Request</h3>
+            <p className="text-[11px] text-slate-500">Are you sure you want to delete this leave request? This action cannot be undone.</p>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setLeaveToDelete(null)} className="h-7 text-[10px]">
+                Cancel
+              </Button>
+              <Button type="button" variant="default" size="sm" onClick={handleDelete} className="h-7 text-[10px] bg-red-600 hover:bg-red-700 text-white">
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

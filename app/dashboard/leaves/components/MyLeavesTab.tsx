@@ -56,9 +56,7 @@ export function MyLeavesTab() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this leave request?')) {
-      await deleteLeave(id);
-    }
+    await deleteLeave(id);
   };
 
   const handleExportExcel = () => {
@@ -287,12 +285,12 @@ export function MyLeavesTab() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
-                          {leave.status === 'Pending' && (
+                          {(leave.status === 'Pending' || isAdminOrApprover) && (
                             <>
-                              <button onClick={() => handleEdit(leave)} className="text-slate-400 hover:text-blue-600 transition-colors">
+                              <button onClick={() => handleEdit(leave)} className="text-blue-600 hover:text-blue-800 transition-colors">
                                 <Edit2 className="h-4 w-4" />
                               </button>
-                              <button onClick={() => handleDelete(leave.id)} className="text-slate-400 hover:text-red-600 transition-colors">
+                              <button onClick={() => handleDelete(leave.id)} className="text-red-600 hover:text-red-800 transition-colors">
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </>

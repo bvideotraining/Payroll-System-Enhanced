@@ -494,13 +494,13 @@ export default function AttendanceTrackerPage() {
                         <div className="flex items-center justify-end gap-0.5">
                           <button 
                             onClick={() => handleEdit(record)}
-                            className="text-slate-400 hover:text-blue-600 transition-colors p-0.5"
+                            className="text-blue-600 hover:text-blue-700 transition-colors p-0.5"
                           >
                             <Edit2 className="h-2.5 w-2.5" />
                           </button>
                           <button 
                             onClick={() => handleDelete(record.id)}
-                            className="text-slate-400 hover:text-red-600 transition-colors p-0.5"
+                            className="text-red-600 hover:text-red-700 transition-colors p-0.5"
                           >
                             <Trash2 className="h-2.5 w-2.5" />
                           </button>

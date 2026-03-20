@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useAuthStore } from '@/src/frontend/store/use-auth-store';

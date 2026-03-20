@@ -124,7 +124,7 @@ export function BalanceTab() {
                       </td>
                       {isAdminOrApprover && (
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                          <button onClick={() => handleEdit(balance)} className="text-slate-400 hover:text-blue-600 transition-colors">
+                          <button onClick={() => handleEdit(balance)} className="text-blue-600 hover:text-blue-800 transition-colors">
                             <Edit2 className="h-4 w-4" />
                           </button>
                         </td>

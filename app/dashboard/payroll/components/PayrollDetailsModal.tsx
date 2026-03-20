@@ -18,15 +18,22 @@ export function PayrollDetailsModal({ payroll, employee, monthRange, onClose }: 
   if (!payroll || !employee || !monthRange) return null;
 
   const handleExportExcel = () => {
+    const increaseAmount = payroll.increaseAmount || 0;
+    const grossSalary = payroll.grossSalary || (payroll.basicSalary + increaseAmount);
+    const totalSalary = payroll.totalSalary || (grossSalary + payroll.totalAllowances);
+
     const data = [
       { Category: 'Employee Name', Value: employee.fullName },
       { Category: 'Employee Code', Value: employee.employeeCode },
       { Category: 'Month', Value: monthRange.month },
       { Category: 'Basic Salary', Value: payroll.basicSalary },
+      { Category: 'Increase Amount', Value: increaseAmount },
+      { Category: 'Gross Salary', Value: grossSalary },
       { Category: 'Total Allowances', Value: payroll.totalAllowances },
       { Category: 'Bonus', Value: payroll.bonus },
-      { Category: 'Gross Salary', Value: payroll.basicSalary + payroll.totalAllowances + payroll.bonus },
-      { Category: 'Total Deductions', Value: payroll.totalDeductions },
+      { Category: 'Total Salary', Value: totalSalary },
+      { Category: 'Fixed Deductions', Value: payroll.totalDeductions },
+      { Category: 'Social Insurance', Value: payroll.socialInsuranceAmount || 0 },
       { Category: 'Attendance Penalties', Value: payroll.attendancePenalties },
       { Category: 'Cash Advance Deduction', Value: payroll.cashAdvanceDeduction },
       { Category: 'Unpaid Leave Deduction', Value: payroll.unpaidLeaveDeduction || 0 },
@@ -51,16 +58,23 @@ export function PayrollDetailsModal({ payroll, employee, monthRange, onClose }: 
     doc.text(`Month: ${monthRange.month}`, 14, 35);
     doc.text(`Status: ${payroll.status}`, 14, 40);
 
+    const increaseAmount = payroll.increaseAmount || 0;
+    const grossSalary = payroll.grossSalary || (payroll.basicSalary + increaseAmount);
+    const totalSalary = payroll.totalSalary || (grossSalary + payroll.totalAllowances);
+
     const tableData = [
-      ['Basic Salary', `$${payroll.basicSalary.toLocaleString()}`],
-      ['Total Allowances', `$${payroll.totalAllowances.toLocaleString()}`],
-      ['Bonus', `$${payroll.bonus.toLocaleString()}`],
-      ['Gross Salary', `$${(payroll.basicSalary + payroll.totalAllowances + payroll.bonus).toLocaleString()}`],
-      ['Total Deductions', `$${payroll.totalDeductions.toLocaleString()}`],
-      ['Attendance Penalties', `$${payroll.attendancePenalties.toLocaleString()}`],
-      ['Cash Advance Deduction', `$${payroll.cashAdvanceDeduction.toLocaleString()}`],
-      ['Unpaid Leave Deduction', `$${(payroll.unpaidLeaveDeduction || 0).toLocaleString()}`],
-      ['Net Salary', `$${payroll.netSalary.toLocaleString()}`],
+      ['Basic Salary', `EGP ${payroll.basicSalary.toLocaleString()}`],
+      ['Increase Amount', `EGP ${increaseAmount.toLocaleString()}`],
+      ['Gross Salary', `EGP ${grossSalary.toLocaleString()}`],
+      ['Total Allowances', `EGP ${payroll.totalAllowances.toLocaleString()}`],
+      ['Bonus', `EGP ${payroll.bonus.toLocaleString()}`],
+      ['Total Salary', `EGP ${totalSalary.toLocaleString()}`],
+      ['Fixed Deductions', `EGP ${payroll.totalDeductions.toLocaleString()}`],
+      ['Social Insurance', `EGP ${(payroll.socialInsuranceAmount || 0).toLocaleString()}`],
+      ['Attendance Penalties', `EGP ${payroll.attendancePenalties.toLocaleString()}`],
+      ['Cash Advance Deduction', `EGP ${payroll.cashAdvanceDeduction.toLocaleString()}`],
+      ['Unpaid Leave Deduction', `EGP ${(payroll.unpaidLeaveDeduction || 0).toLocaleString()}`],
+      ['Net Salary', `EGP ${payroll.netSalary.toLocaleString()}`],
     ];
 
     autoTable(doc, {
@@ -94,19 +108,27 @@ export function PayrollDetailsModal({ payroll, employee, monthRange, onClose }: 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Basic Salary</span>
-                  <span className="font-medium text-slate-900">${payroll.basicSalary.toLocaleString()}</span>
+                  <span className="font-medium text-slate-900">EGP {payroll.basicSalary.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Total Allowances</span>
-                  <span className="font-medium text-slate-900">${payroll.totalAllowances.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Bonus</span>
-                  <span className="font-medium text-slate-900">${payroll.bonus.toLocaleString()}</span>
+                  <span className="text-slate-600">Increase Amount</span>
+                  <span className="font-medium text-slate-900">EGP {(payroll.increaseAmount || 0).toLocaleString()}</span>
                 </div>
                 <div className="pt-2 border-t border-slate-200 flex justify-between text-sm font-semibold">
                   <span className="text-slate-900">Gross Salary</span>
-                  <span className="text-blue-600">${(payroll.basicSalary + payroll.totalAllowances + payroll.bonus).toLocaleString()}</span>
+                  <span className="text-blue-600">EGP {(payroll.grossSalary || (payroll.basicSalary + (payroll.increaseAmount || 0))).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm pt-2">
+                  <span className="text-slate-600">Total Allowances</span>
+                  <span className="font-medium text-slate-900">EGP {payroll.totalAllowances.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Bonus</span>
+                  <span className="font-medium text-slate-900">EGP {payroll.bonus.toLocaleString()}</span>
+                </div>
+                <div className="pt-2 border-t border-slate-200 flex justify-between text-sm font-semibold">
+                  <span className="text-slate-900">Total Salary</span>
+                  <span className="text-blue-600">EGP {(payroll.totalSalary || ((payroll.grossSalary || (payroll.basicSalary + (payroll.increaseAmount || 0))) + payroll.totalAllowances)).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -116,23 +138,27 @@ export function PayrollDetailsModal({ payroll, employee, monthRange, onClose }: 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Fixed Deductions</span>
-                  <span className="font-medium text-slate-900">${payroll.totalDeductions.toLocaleString()}</span>
+                  <span className="font-medium text-slate-900">EGP {payroll.totalDeductions.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Social Insurance</span>
+                  <span className="font-medium text-slate-900">EGP {(payroll.socialInsuranceAmount || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Attendance Penalties</span>
-                  <span className="font-medium text-slate-900">${payroll.attendancePenalties.toLocaleString()}</span>
+                  <span className="font-medium text-slate-900">EGP {payroll.attendancePenalties.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Cash Advance</span>
-                  <span className="font-medium text-slate-900">${payroll.cashAdvanceDeduction.toLocaleString()}</span>
+                  <span className="font-medium text-slate-900">EGP {payroll.cashAdvanceDeduction.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Unpaid Leave</span>
-                  <span className="font-medium text-slate-900">${(payroll.unpaidLeaveDeduction || 0).toLocaleString()}</span>
+                  <span className="font-medium text-slate-900">EGP {(payroll.unpaidLeaveDeduction || 0).toLocaleString()}</span>
                 </div>
                 <div className="pt-2 border-t border-slate-200 flex justify-between text-sm font-semibold">
                   <span className="text-slate-900">Total Deductions</span>
-                  <span className="text-red-600">${(payroll.totalDeductions + payroll.attendancePenalties + payroll.cashAdvanceDeduction + (payroll.unpaidLeaveDeduction || 0)).toLocaleString()}</span>
+                  <span className="text-red-600">EGP {(payroll.totalDeductions + payroll.attendancePenalties + payroll.cashAdvanceDeduction + (payroll.unpaidLeaveDeduction || 0) + (payroll.socialInsuranceAmount || 0)).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -144,7 +170,7 @@ export function PayrollDetailsModal({ payroll, employee, monthRange, onClose }: 
               <p className="text-xs text-blue-700">Total amount to be paid</p>
             </div>
             <div className="text-2xl font-bold text-blue-700">
-              ${payroll.netSalary.toLocaleString()}
+              EGP {payroll.netSalary.toLocaleString()}
             </div>
           </div>
         </div>

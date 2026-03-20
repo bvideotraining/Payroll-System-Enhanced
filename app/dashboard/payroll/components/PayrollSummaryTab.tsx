@@ -53,7 +53,9 @@ export function PayrollSummaryTab() {
         'Employee Code': emp?.employeeCode || 'Unknown',
         'Month': range?.month || 'Unknown',
         'Basic Salary': p.basicSalary,
-        'Gross Salary': p.basicSalary + p.totalAllowances + p.bonus,
+        'Increase Amount': p.increaseAmount || 0,
+        'Gross Salary': p.grossSalary || (p.basicSalary + (p.increaseAmount || 0)),
+        'Total Salary': p.totalSalary || ((p.grossSalary || (p.basicSalary + (p.increaseAmount || 0))) + p.totalAllowances),
         'Total Deductions': p.totalDeductions + p.attendancePenalties + p.cashAdvanceDeduction + (p.unpaidLeaveDeduction || 0),
         'Net Salary': p.netSalary,
         'Status': p.status
@@ -100,6 +102,9 @@ export function PayrollSummaryTab() {
             <tr>
               <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Employee</th>
               <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Month</th>
+              <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Increase</th>
+              <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Gross Salary</th>
+              <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Total Salary</th>
               <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Net Salary</th>
               <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Status</th>
               <th className="px-3 py-2 text-right text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
@@ -108,7 +113,7 @@ export function PayrollSummaryTab() {
           <tbody className="bg-white divide-y divide-slate-200">
             {filteredPayrolls.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-[10px] text-slate-400 italic">
+                <td colSpan={8} className="px-3 py-6 text-center text-[10px] text-slate-400 italic">
                   No payroll records found
                 </td>
               </tr>
@@ -116,6 +121,10 @@ export function PayrollSummaryTab() {
               filteredPayrolls.map((p) => {
                 const emp = employees.find(e => e.id === p.employeeId);
                 const range = monthRanges.find(r => r.id === p.monthRangeId);
+                const increaseAmount = p.increaseAmount || 0;
+                const grossSalary = p.grossSalary || (p.basicSalary + increaseAmount);
+                const totalSalary = p.totalSalary || (grossSalary + p.totalAllowances);
+                
                 return (
                   <tr key={p.id} className="hover:bg-slate-50">
                     <td className="px-3 py-2 whitespace-nowrap">
@@ -125,8 +134,17 @@ export function PayrollSummaryTab() {
                     <td className="px-3 py-2 whitespace-nowrap text-[10px] text-slate-500">
                       {range?.month || 'N/A'}
                     </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-[10px] text-slate-900">
+                      EGP {increaseAmount.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-[10px] text-slate-900">
+                      EGP {grossSalary.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-[10px] text-slate-900">
+                      EGP {totalSalary.toLocaleString()}
+                    </td>
                     <td className="px-3 py-2 whitespace-nowrap text-[10px] font-bold text-slate-900">
-                      ${p.netSalary.toLocaleString()}
+                      EGP {p.netSalary.toLocaleString()}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium border ${getStatusColor(p.status)}`}>

@@ -351,13 +351,13 @@ export default function OrganizationPage() {
                         <div className="flex gap-0.5">
                           <button 
                             onClick={() => setEditingBranch({ id: branch.id, name: branch.name })}
-                            className="text-slate-400 hover:text-blue-600 transition-colors p-0.5"
+                            className="text-blue-600 hover:text-blue-700 transition-colors p-0.5"
                           >
                             <Edit2 className="h-2.5 w-2.5" />
                           </button>
                           <button 
                             onClick={() => deleteBranch(branch.id)}
-                            className="text-red-400 hover:text-red-600 transition-colors p-0.5"
+                            className="text-red-600 hover:text-red-700 transition-colors p-0.5"
                           >
                             <Trash2 className="h-2.5 w-2.5" />
                           </button>
@@ -441,13 +441,13 @@ export default function OrganizationPage() {
                         <div className="flex gap-0.5">
                           <button 
                             onClick={() => setEditingDept({ id: dept.id, name: dept.name, type: dept.type })}
-                            className="text-slate-400 hover:text-blue-600 transition-colors p-0.5"
+                            className="text-blue-600 hover:text-blue-700 transition-colors p-0.5"
                           >
                             <Edit2 className="h-2.5 w-2.5" />
                           </button>
                           <button 
                             onClick={() => deleteDepartment(dept.id)}
-                            className="text-red-400 hover:text-red-600 transition-colors p-0.5"
+                            className="text-red-600 hover:text-red-700 transition-colors p-0.5"
                           >
                             <Trash2 className="h-2.5 w-2.5" />
                           </button>
@@ -562,13 +562,13 @@ export default function OrganizationPage() {
                           <div className="flex gap-0.5">
                             <button 
                               onClick={() => setEditingJob({ id: job.id, title: job.title, type: job.type, departmentId: job.departmentId })}
-                              className="text-slate-400 hover:text-blue-600 transition-colors p-0.5"
+                              className="text-blue-600 hover:text-blue-700 transition-colors p-0.5"
                             >
                               <Edit2 className="h-2.5 w-2.5" />
                             </button>
                             <button 
                               onClick={() => deleteJobTitle(job.id)}
-                              className="text-red-400 hover:text-red-600 transition-colors p-0.5"
+                              className="text-red-600 hover:text-red-700 transition-colors p-0.5"
                             >
                               <Trash2 className="h-2.5 w-2.5" />
                             </button>
@@ -665,13 +665,13 @@ export default function OrganizationPage() {
                         <div className="flex gap-0.5">
                           <button 
                             onClick={() => setEditingMonthRange({ id: range.id, month: range.month, startDate: range.startDate, endDate: range.endDate })}
-                            className="text-slate-400 hover:text-blue-600 transition-colors p-0.5"
+                            className="text-blue-600 hover:text-blue-700 transition-colors p-0.5"
                           >
                             <Edit2 className="h-2.5 w-2.5" />
                           </button>
                           <button 
                             onClick={() => deleteMonthRange(range.id)}
-                            className="text-red-400 hover:text-red-600 transition-colors p-0.5"
+                            className="text-red-600 hover:text-red-700 transition-colors p-0.5"
                           >
                             <Trash2 className="h-2.5 w-2.5" />
                           </button>
@@ -879,13 +879,13 @@ export default function OrganizationPage() {
                               lateDeductionDaysPerStep: rule.lateDeductionDaysPerStep || 1,
                               absenceDeductionDays: rule.absenceDeductionDays || 1
                             })}
-                            className="text-slate-400 hover:text-blue-600 transition-colors p-0.5"
+                            className="text-blue-600 hover:text-blue-700 transition-colors p-0.5"
                           >
                             <Edit2 className="h-2.5 w-2.5" />
                           </button>
                           <button 
                             onClick={() => deleteAttendanceRule(rule.id)}
-                            className="text-red-400 hover:text-red-600 transition-colors p-0.5"
+                            className="text-red-600 hover:text-red-700 transition-colors p-0.5"
                           >
                             <Trash2 className="h-2.5 w-2.5" />
                           </button>

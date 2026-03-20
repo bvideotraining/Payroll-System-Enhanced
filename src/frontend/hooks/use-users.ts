@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { collection, doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-import { db, firebaseConfig } from '../lib/firebase';
+import { db, firebaseConfig, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useAuthStore } from '../store/use-auth-store';
+import { NotificationService } from '../lib/notification-service';
 
 export interface AppUser {
   id: string;
@@ -33,7 +34,7 @@ export function useUsers() {
       setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppUser)));
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching users:", error);
+      handleFirestoreError(error, OperationType.GET, 'users');
       setLoading(false);
     });
     return () => unsub();
@@ -69,12 +70,23 @@ export function useUsers() {
     };
 
     if (id) {
-      await setDoc(doc(db, 'users', id), userData, { merge: true });
+      const cleanUserData = JSON.parse(JSON.stringify(userData));
+      try {
+        await setDoc(doc(db, 'users', id), cleanUserData, { merge: true });
+        await NotificationService.notifySystemAdmin(isNew ? 'User Created' : 'User Updated', `User ${user.email} was ${isNew ? 'created' : 'updated'}.`);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, `users/${id}`);
+      }
     }
   };
 
   const deleteUser = async (id: string) => {
-    await deleteDoc(doc(db, 'users', id));
+    try {
+      await deleteDoc(doc(db, 'users', id));
+      await NotificationService.notifySystemAdmin('User Deleted', `User ${id} was deleted.`);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `users/${id}`);
+    }
   };
 
   return {

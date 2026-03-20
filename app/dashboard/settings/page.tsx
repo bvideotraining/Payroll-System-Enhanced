@@ -4,18 +4,37 @@ import { useState } from 'react';
 import { useUsers, AppUser } from '@/src/frontend/hooks/use-users';
 import { useSystemConfig, SystemConfig } from '@/src/frontend/hooks/use-system-config';
 import { useEmployees } from '@/src/frontend/hooks/use-employees';
-import { useRoles, AppRole } from '@/src/frontend/hooks/use-roles';
+import { useRoles, AppRole, RolePermission } from '@/src/frontend/hooks/use-roles';
+import { useOrganization } from '@/src/frontend/hooks/use-organization';
 import { Button } from '@/src/frontend/components/ui/button';
 import { Input } from '@/src/frontend/components/ui/input';
 import { Label } from '@/src/frontend/components/ui/label';
-import { Users, Settings as SettingsIcon, Shield, Edit2, Trash2, Plus, Save } from 'lucide-react';
+import { Users, Settings as SettingsIcon, Shield, Edit2, Trash2, Plus, Save, Key, Database, AlertTriangle } from 'lucide-react';
+import { AuthSettingsTab } from './components/AuthSettingsTab';
+import { BackupRestoreTab } from './components/BackupRestoreTab';
+import { SystemResetTab } from './components/SystemResetTab';
+import { NotificationSettingsTab } from './components/NotificationSettingsTab';
+import { Bell } from 'lucide-react';
+
+const MODULES = [
+  'Employees',
+  'Leaves',
+  'Attendance',
+  'Payroll',
+  'Organization',
+  'Bonuses',
+  'Medical Insurance',
+  'Social Insurance',
+  'Settings'
+];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'system'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'system' | 'auth' | 'backup' | 'reset' | 'notifications'>('users');
   const { users, saveUser, deleteUser, loading: usersLoading } = useUsers();
   const { config, updateConfig, loading: configLoading } = useSystemConfig();
   const { employees, loading: empLoading } = useEmployees();
   const { roles, saveRole, deleteRole, loading: rolesLoading } = useRoles();
+  const { branches, departments } = useOrganization();
 
   // User Form State
   const [editingUser, setEditingUser] = useState<Partial<AppUser> | null>(null);
@@ -74,7 +93,11 @@ export default function SettingsPage() {
   };
 
   const handleEditRole = (role: AppRole) => {
-    setEditingRole(role);
+    setEditingRole({
+      ...role,
+      accessType: role.accessType || 'full',
+      customPermissions: role.customPermissions || []
+    });
     setIsRoleModalOpen(true);
   };
 
@@ -82,7 +105,8 @@ export default function SettingsPage() {
     setEditingRole({
       name: '',
       description: '',
-      permissions: []
+      accessType: 'full',
+      customPermissions: []
     });
     setIsRoleModalOpen(true);
   };
@@ -98,6 +122,33 @@ export default function SettingsPage() {
     } catch (error: any) {
       alert(`Error saving role: ${error.message}`);
     }
+  };
+
+  const handleCustomPermissionChange = (module: string, field: keyof RolePermission, value: any) => {
+    if (!editingRole) return;
+    
+    const currentPerms = editingRole.customPermissions || [];
+    const permIndex = currentPerms.findIndex(p => p.module === module);
+    
+    let newPerms = [...currentPerms];
+    if (permIndex >= 0) {
+      newPerms[permIndex] = { ...newPerms[permIndex], [field]: value };
+    } else {
+      newPerms.push({
+        module,
+        view: field === 'view' ? value : false,
+        create: field === 'create' ? value : false,
+        edit: field === 'edit' ? value : false,
+        delete: field === 'delete' ? value : false,
+        scope: field === 'scope' ? value : 'all',
+        specificBranch: field === 'specificBranch' ? value : undefined,
+        specificDepartment: field === 'specificDepartment' ? value : undefined,
+        specificBranches: field === 'specificBranches' ? value : [],
+        specificDepartments: field === 'specificDepartments' ? value : [],
+      });
+    }
+    
+    setEditingRole({ ...editingRole, customPermissions: newPerms });
   };
 
   const handleDeleteRole = async () => {
@@ -137,10 +188,10 @@ export default function SettingsPage() {
 
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
         <div className="border-b border-slate-200">
-          <nav className="-mb-px flex" aria-label="Tabs">
+          <nav className="-mb-px flex overflow-x-auto" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('users')}
-              className={`w-1/3 py-3 px-1 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
                 activeTab === 'users'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -151,7 +202,7 @@ export default function SettingsPage() {
             </button>
             <button
               onClick={() => setActiveTab('roles')}
-              className={`w-1/3 py-3 px-1 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
                 activeTab === 'roles'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -165,7 +216,7 @@ export default function SettingsPage() {
                 setActiveTab('system');
                 setConfigForm(config);
               }}
-              className={`w-1/3 py-3 px-1 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
                 activeTab === 'system'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -173,6 +224,50 @@ export default function SettingsPage() {
             >
               <SettingsIcon className="h-4 w-4" />
               System Configurations
+            </button>
+            <button
+              onClick={() => setActiveTab('auth')}
+              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+                activeTab === 'auth'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <Key className="h-4 w-4" />
+              Auth Settings
+            </button>
+            <button
+              onClick={() => setActiveTab('backup')}
+              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+                activeTab === 'backup'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <Database className="h-4 w-4" />
+              Backup & Restore
+            </button>
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+                activeTab === 'notifications'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <Bell className="h-4 w-4" />
+              Notification Settings
+            </button>
+            <button
+              onClick={() => setActiveTab('reset')}
+              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+                activeTab === 'reset'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <AlertTriangle className="h-4 w-4" />
+              System Reset
             </button>
           </nav>
         </div>
@@ -361,6 +456,11 @@ export default function SettingsPage() {
               </form>
             </div>
           )}
+
+          {activeTab === 'auth' && <AuthSettingsTab />}
+          {activeTab === 'backup' && <BackupRestoreTab />}
+          {activeTab === 'reset' && <SystemResetTab />}
+          {activeTab === 'notifications' && <NotificationSettingsTab />}
         </div>
       </div>
 
@@ -467,8 +567,8 @@ export default function SettingsPage() {
       {/* Role Modal */}
       {isRoleModalOpen && editingRole && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center shrink-0">
               <h3 className="text-sm font-semibold text-slate-900">
                 {editingRole.id ? 'Edit Role' : 'Add New Role'}
               </h3>
@@ -476,28 +576,178 @@ export default function SettingsPage() {
                 &times;
               </button>
             </div>
-            <form onSubmit={handleSaveRole} className="p-4 space-y-3">
-              <div className="space-y-1.5">
-                <Label className="text-[10px]">Role Name</Label>
-                <Input 
-                  required
-                  value={editingRole.name}
-                  onChange={e => setEditingRole({...editingRole, name: e.target.value})}
-                  className="h-7 text-[11px]"
-                  placeholder="e.g., Manager"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px]">Description</Label>
-                <Input 
-                  value={editingRole.description}
-                  onChange={e => setEditingRole({...editingRole, description: e.target.value})}
-                  className="h-7 text-[11px]"
-                  placeholder="Role description"
-                />
+            <form onSubmit={handleSaveRole} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-4 space-y-4 overflow-y-auto flex-1">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px]">Role Name</Label>
+                    <Input 
+                      required
+                      value={editingRole.name}
+                      onChange={e => setEditingRole({...editingRole, name: e.target.value})}
+                      className="h-7 text-[11px]"
+                      placeholder="e.g., Manager"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px]">Description</Label>
+                    <Input 
+                      value={editingRole.description}
+                      onChange={e => setEditingRole({...editingRole, description: e.target.value})}
+                      className="h-7 text-[11px]"
+                      placeholder="Role description"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 pt-2">
+                  <Label className="text-[10px]">Access Type</Label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 text-[11px]">
+                      <input 
+                        type="radio" 
+                        name="accessType" 
+                        value="full" 
+                        checked={editingRole.accessType === 'full'} 
+                        onChange={() => setEditingRole({...editingRole, accessType: 'full'})}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      Full Access
+                    </label>
+                    <label className="flex items-center gap-2 text-[11px]">
+                      <input 
+                        type="radio" 
+                        name="accessType" 
+                        value="custom" 
+                        checked={editingRole.accessType === 'custom'} 
+                        onChange={() => setEditingRole({...editingRole, accessType: 'custom'})}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      Custom Access
+                    </label>
+                  </div>
+                </div>
+
+                {editingRole.accessType === 'custom' && (
+                  <div className="mt-4 border border-slate-200 rounded-md overflow-hidden">
+                    <table className="min-w-full divide-y divide-slate-200">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-500 uppercase tracking-wider">Module</th>
+                          <th className="px-3 py-2 text-center text-[10px] font-medium text-slate-500 uppercase tracking-wider">View</th>
+                          <th className="px-3 py-2 text-center text-[10px] font-medium text-slate-500 uppercase tracking-wider">Create</th>
+                          <th className="px-3 py-2 text-center text-[10px] font-medium text-slate-500 uppercase tracking-wider">Edit</th>
+                          <th className="px-3 py-2 text-center text-[10px] font-medium text-slate-500 uppercase tracking-wider">Delete</th>
+                          <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-500 uppercase tracking-wider">Scope</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-slate-200">
+                        {MODULES.map(module => {
+                          const perm = editingRole.customPermissions?.find(p => p.module === module) || {
+                            module, view: false, create: false, edit: false, delete: false, scope: 'all'
+                          };
+                          return (
+                            <tr key={module} className="hover:bg-slate-50">
+                              <td className="px-3 py-2 whitespace-nowrap text-[11px] font-medium text-slate-900">{module}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                                <input type="checkbox" checked={perm.view} onChange={e => handleCustomPermissionChange(module, 'view', e.target.checked)} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                                <input type="checkbox" checked={perm.create} onChange={e => handleCustomPermissionChange(module, 'create', e.target.checked)} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                                <input type="checkbox" checked={perm.edit} onChange={e => handleCustomPermissionChange(module, 'edit', e.target.checked)} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                                <input type="checkbox" checked={perm.delete} onChange={e => handleCustomPermissionChange(module, 'delete', e.target.checked)} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap">
+                                <div className="flex flex-col gap-1">
+                                  <select 
+                                    value={perm.scope} 
+                                    onChange={e => handleCustomPermissionChange(module, 'scope', e.target.value)}
+                                    className="h-6 rounded border border-slate-200 text-[10px] px-1"
+                                  >
+                                    <option value="all">All Branches & Depts</option>
+                                    <option value="branch">Specific Branch</option>
+                                    <option value="department">Specific Department</option>
+                                  </select>
+                                  {perm.scope === 'branch' && (
+                                    <div className="mt-1 max-h-24 overflow-y-auto border border-slate-200 rounded p-1 bg-white space-y-0.5 min-w-[150px]">
+                                      <label className="flex items-center gap-1.5 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={(perm.specificBranches || []).includes('OWN_BRANCH')}
+                                          onChange={(e) => {
+                                            const current = perm.specificBranches || [];
+                                            const next = e.target.checked ? [...current, 'OWN_BRANCH'] : current.filter(id => id !== 'OWN_BRANCH');
+                                            handleCustomPermissionChange(module, 'specificBranches', next);
+                                          }}
+                                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3 w-3"
+                                        />
+                                        <span className="text-[10px]">His Own Branch</span>
+                                      </label>
+                                      {branches.map(b => (
+                                        <label key={b.id} className="flex items-center gap-1.5 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={(perm.specificBranches || []).includes(b.id)}
+                                            onChange={(e) => {
+                                              const current = perm.specificBranches || [];
+                                              const next = e.target.checked ? [...current, b.id] : current.filter(id => id !== b.id);
+                                              handleCustomPermissionChange(module, 'specificBranches', next);
+                                            }}
+                                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3 w-3"
+                                          />
+                                          <span className="text-[10px]">{b.name}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {perm.scope === 'department' && (
+                                    <div className="mt-1 max-h-24 overflow-y-auto border border-slate-200 rounded p-1 bg-white space-y-0.5 min-w-[150px]">
+                                      <label className="flex items-center gap-1.5 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={(perm.specificDepartments || []).includes('OWN_DEPARTMENT')}
+                                          onChange={(e) => {
+                                            const current = perm.specificDepartments || [];
+                                            const next = e.target.checked ? [...current, 'OWN_DEPARTMENT'] : current.filter(id => id !== 'OWN_DEPARTMENT');
+                                            handleCustomPermissionChange(module, 'specificDepartments', next);
+                                          }}
+                                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3 w-3"
+                                        />
+                                        <span className="text-[10px]">His Own Department</span>
+                                      </label>
+                                      {departments.map(d => (
+                                        <label key={d.id} className="flex items-center gap-1.5 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={(perm.specificDepartments || []).includes(d.id)}
+                                            onChange={(e) => {
+                                              const current = perm.specificDepartments || [];
+                                              const next = e.target.checked ? [...current, d.id] : current.filter(id => id !== d.id);
+                                              handleCustomPermissionChange(module, 'specificDepartments', next);
+                                            }}
+                                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3 w-3"
+                                          />
+                                          <span className="text-[10px]">{d.name}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
-              <div className="pt-3 flex justify-end gap-2">
+              <div className="p-4 border-t border-slate-100 flex justify-end gap-2 shrink-0 bg-slate-50">
                 <Button type="button" variant="outline" size="sm" onClick={() => setIsRoleModalOpen(false)} className="h-7 text-[10px]">
                   Cancel
                 </Button>

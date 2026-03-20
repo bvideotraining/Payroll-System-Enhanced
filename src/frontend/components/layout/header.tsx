@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, Bell, User, LogOut } from 'lucide-react';
+import { Menu, User, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/src/frontend/store/use-auth-store';
 import { useAuth } from '@/src/frontend/hooks/use-auth';
+import { NotificationDropdown } from '@/src/frontend/components/notifications/NotificationDropdown';
 
 interface HeaderProps {
   setSidebarOpen: (open: boolean) => void;
@@ -37,10 +38,7 @@ export function Header({ setSidebarOpen }: HeaderProps) {
         </div>
         
         <div className="flex items-center gap-x-3 lg:gap-x-4">
-          <button type="button" className="-m-2 p-2 text-gray-400 hover:text-gray-500">
-            <span className="sr-only">View notifications</span>
-            <Bell className="h-5 w-5" aria-hidden="true" />
-          </button>
+          <NotificationDropdown />
 
           {/* Separator */}
           <div className="hidden lg:block lg:h-5 lg:w-px lg:bg-gray-200" aria-hidden="true" />

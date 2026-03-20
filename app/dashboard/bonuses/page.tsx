@@ -90,9 +90,7 @@ export default function BonusesPage() {
   };
 
   const handleDeleteBonus = async (id: string) => {
-    if (confirm('Are you sure you want to delete this bonus entry?')) {
-      await deleteBonus(id);
-    }
+    await deleteBonus(id);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -412,16 +410,16 @@ export default function BonusesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-2.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button 
                             onClick={() => handleEditBonus(bonus)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
+                            className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-all"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button 
                             onClick={() => handleDeleteBonus(bonus.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                            className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-all"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -451,8 +449,8 @@ export default function BonusesPage() {
                     </div>
                   </div>
                   <div className="flex gap-0.5">
-                    <button onClick={() => handleEditBonus(bonus)} className="p-1.5 text-slate-400 hover:text-blue-600 rounded"><Edit2 className="h-3.5 w-3.5" /></button>
-                    <button onClick={() => handleDeleteBonus(bonus.id)} className="p-1.5 text-slate-400 hover:text-red-600 rounded"><Trash2 className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleEditBonus(bonus)} className="p-1.5 text-blue-600 hover:text-blue-800 rounded"><Edit2 className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleDeleteBonus(bonus.id)} className="p-1.5 text-red-600 hover:text-red-800 rounded"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
 

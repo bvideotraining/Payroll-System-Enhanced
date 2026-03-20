@@ -53,9 +53,7 @@ export default function EmployeesPage() {
   });
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this employee?')) {
-      await deleteEmployee(id);
-    }
+    await deleteEmployee(id);
   };
 
   const categories = ['All Categories', ...Array.from(new Set(employees.map(e => e.category).filter(Boolean)))];

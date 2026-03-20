@@ -8,15 +8,19 @@ import {
   FileText, 
   Plus,
   Search,
-  Filter
+  Filter,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/src/frontend/components/ui/button';
 import { SalaryConfigTab } from './components/SalaryConfigTab';
 import { CashAdvanceTab } from './components/CashAdvanceTab';
 import { GeneratePayrollTab } from './components/GeneratePayrollTab';
 import { PayrollSummaryTab } from './components/PayrollSummaryTab';
+import { PayrollReportTab } from './components/PayrollReportTab';
+import { SalaryIncreasesTab } from './components/SalaryIncreasesTab';
+import { TrendingUp } from 'lucide-react';
 
-type TabType = 'summary' | 'config' | 'advances' | 'generate';
+type TabType = 'summary' | 'config' | 'advances' | 'generate' | 'report' | 'increases';
 
 export default function PayrollPage() {
   const [activeTab, setActiveTab] = useState<TabType>('summary');
@@ -35,7 +39,7 @@ export default function PayrollPage() {
           <nav className="-mb-px flex" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('summary')}
-              className={`w-1/4 py-2 px-1 text-center border-b-2 font-medium text-[10px] flex items-center justify-center gap-1 ${
+              className={`w-1/6 py-2 px-1 text-center border-b-2 font-medium text-[10px] flex items-center justify-center gap-1 ${
                 activeTab === 'summary'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -46,7 +50,7 @@ export default function PayrollPage() {
             </button>
             <button
               onClick={() => setActiveTab('config')}
-              className={`w-1/4 py-2 px-1 text-center border-b-2 font-medium text-[10px] flex items-center justify-center gap-1 ${
+              className={`w-1/6 py-2 px-1 text-center border-b-2 font-medium text-[10px] flex items-center justify-center gap-1 ${
                 activeTab === 'config'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -56,8 +60,19 @@ export default function PayrollPage() {
               Salary Config
             </button>
             <button
+              onClick={() => setActiveTab('increases')}
+              className={`w-1/6 py-2 px-1 text-center border-b-2 font-medium text-[10px] flex items-center justify-center gap-1 ${
+                activeTab === 'increases'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <TrendingUp className="h-3 w-3" />
+              Salary Increases
+            </button>
+            <button
               onClick={() => setActiveTab('advances')}
-              className={`w-1/4 py-2 px-1 text-center border-b-2 font-medium text-[10px] flex items-center justify-center gap-1 ${
+              className={`w-1/6 py-2 px-1 text-center border-b-2 font-medium text-[10px] flex items-center justify-center gap-1 ${
                 activeTab === 'advances'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -68,7 +83,7 @@ export default function PayrollPage() {
             </button>
             <button
               onClick={() => setActiveTab('generate')}
-              className={`w-1/4 py-2 px-1 text-center border-b-2 font-medium text-[10px] flex items-center justify-center gap-1 ${
+              className={`w-1/6 py-2 px-1 text-center border-b-2 font-medium text-[10px] flex items-center justify-center gap-1 ${
                 activeTab === 'generate'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -77,14 +92,27 @@ export default function PayrollPage() {
               <Calculator className="h-3 w-3" />
               Generate Payroll
             </button>
+            <button
+              onClick={() => setActiveTab('report')}
+              className={`w-1/6 py-2 px-1 text-center border-b-2 font-medium text-[10px] flex items-center justify-center gap-1 ${
+                activeTab === 'report'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <BarChart3 className="h-3 w-3" />
+              Payroll Report
+            </button>
           </nav>
         </div>
 
         <div className="p-3">
           {activeTab === 'summary' && <PayrollSummaryTab />}
           {activeTab === 'config' && <SalaryConfigTab />}
+          {activeTab === 'increases' && <SalaryIncreasesTab />}
           {activeTab === 'advances' && <CashAdvanceTab />}
           {activeTab === 'generate' && <GeneratePayrollTab />}
+          {activeTab === 'report' && <PayrollReportTab />}
         </div>
       </div>
     </div>

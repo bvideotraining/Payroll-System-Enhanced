@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuthStore } from '../store/use-auth-store';
+import { NotificationService } from '../lib/notification-service';
 
 export interface SystemConfig {
   currency: string;
@@ -99,6 +100,7 @@ export function useSystemConfig() {
   const updateConfig = async (newConfig: SystemConfig) => {
     try {
       await setDoc(doc(db, 'system', 'config'), newConfig, { merge: true });
+      await NotificationService.notifySystemAdmin('System Config Updated', 'Global system settings were modified.');
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'system/config');
     }

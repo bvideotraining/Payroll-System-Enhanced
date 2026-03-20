@@ -15,7 +15,7 @@ import { AttendanceRecord } from '@/src/frontend/types/attendance';
 
 export function GeneratePayrollTab() {
   const { employees } = useEmployees();
-  const { salaryConfigs, cashAdvances, generatePayroll } = usePayroll();
+  const { salaryConfigs, cashAdvances, generatePayroll, payrolls } = usePayroll();
   const { monthRanges, attendanceRules } = useOrganization();
   
   const [selectedMonthRangeId, setSelectedMonthRangeId] = useState('');
@@ -64,9 +64,14 @@ export function GeneratePayrollTab() {
         leave => leave.startDate <= range.endDate && leave.endDate >= range.startDate
       );
 
+      // Fetch ALL social insurances
+      const socialInsuranceQuery = query(collection(db, 'social_insurances'));
+      const socialInsuranceSnapshot = await getDocs(socialInsuranceQuery);
+      const allSocialInsurances = socialInsuranceSnapshot.docs.map(doc => doc.data() as any);
+
       for (let i = 0; i < employees.length; i++) {
         const emp = employees[i];
-        const config = salaryConfigs.find(c => c.employeeId === emp.id);
+        const config = salaryConfigs.find(c => c.employeeId === emp.id && c.monthRangeId === selectedMonthRangeId);
         
         if (!config) {
           console.warn(`No salary config for ${emp.fullName}`);
@@ -96,23 +101,99 @@ export function GeneratePayrollTab() {
           lateDaysDeduction = Math.ceil((totalLateMinutes - gracePeriod) / lateStep) * lateDaysPerStep;
         }
 
-        const dailyWage = config.basicSalary / 30;
+        let dailyWage = 0;
+        let calculatedBasicSalary = 0;
+        let absencePenaltyAmount = 0;
+        const increaseAmount = config.increaseAmount || 0;
+
+        if (emp.category === 'Part Time') {
+          dailyWage = config.dailyRate || 0;
+          
+          let totalAttendedDays = 0;
+          empAttendance.forEach(a => {
+            if (a.status === 'Present' || a.status === 'Late') totalAttendedDays += 1;
+            else if (a.status === 'Half Day') totalAttendedDays += 0.5;
+          });
+          
+          calculatedBasicSalary = totalAttendedDays * dailyWage;
+          absencePenaltyAmount = 0; // Part time are paid by attendance, so no extra penalty for absence
+        } else {
+          dailyWage = (config.basicSalary + increaseAmount) / 30;
+          calculatedBasicSalary = config.basicSalary;
+          absencePenaltyAmount = (totalAbsences * absenceDays) * dailyWage;
+        }
+
+        const grossSalary = calculatedBasicSalary + increaseAmount;
         const latePenaltyAmount = lateDaysDeduction * dailyWage;
-        const absencePenaltyAmount = (totalAbsences * absenceDays) * dailyWage;
-        
         const attendancePenalties = latePenaltyAmount + absencePenaltyAmount;
 
         // Calculate totals
         const totalAllowances = config.allowances.reduce((sum, a) => sum + a.amount, 0);
-        const totalDeductions = config.deductions.reduce((sum, d) => sum + d.amount, 0);
+        const totalSalary = grossSalary + totalAllowances;
+        
+        // Exclude Social Insurance and Cash Advance from totalDeductions as they are handled separately
+        const totalDeductions = config.deductions
+          .filter(d => !d.name.toLowerCase().includes('social insurance') && !d.name.toLowerCase().includes('cash advance'))
+          .reduce((sum, d) => sum + d.amount, 0);
+        
+        // Fetch social insurance from social insurance module
+        const empSocialInsurance = allSocialInsurances.find(si => si.employeeId === emp.id);
+        const socialInsuranceAmount = empSocialInsurance ? empSocialInsurance.insurableWage * 0.11 : 0; // Assuming 11% employee share, adjust as needed or fetch from config if available
+        
+        const medicalInsuranceAmount = config.deductions.find(d => d.name.toLowerCase().includes('medical'))?.amount || 0;
         
         // Check for cash advances in this month
-        const monthlyAdvances = cashAdvances.filter(a => 
-          a.employeeId === emp.id && 
-          a.repaymentMonth === selectedMonthRangeId && 
-          a.status === 'Approved'
-        );
-        const cashAdvanceDeduction = monthlyAdvances.reduce((sum, a) => sum + a.amount, 0);
+        let cashAdvanceDeduction = 0;
+        
+        // Sort month ranges to determine chronological order
+        const sortedRanges = [...monthRanges].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+        const currentRangeIndex = sortedRanges.findIndex(r => r.id === selectedMonthRangeId);
+
+        if (currentRangeIndex !== -1) {
+          const activeAdvances = cashAdvances.filter(a => 
+            a.employeeId === emp.id && 
+            a.status === 'Approved'
+          );
+
+          activeAdvances.forEach(adv => {
+            const startRangeIndex = sortedRanges.findIndex(r => r.id === adv.repaymentMonth);
+            if (startRangeIndex !== -1 && currentRangeIndex >= startRangeIndex) {
+              const installments = adv.installments || 1;
+              const monthlyAmount = Math.floor((adv.amount / installments) * 100) / 100;
+              
+              // Calculate how much has already been paid in previous payrolls
+              let paidAmount = 0;
+              let payrollsCount = 0;
+              for (let i = startRangeIndex; i < currentRangeIndex; i++) {
+                const rangeId = sortedRanges[i].id;
+                const hasPayroll = payrolls.some(p => p.employeeId === adv.employeeId && p.monthRangeId === rangeId);
+                if (hasPayroll) {
+                  payrollsCount++;
+                  const isLast = payrollsCount === installments;
+                  const amountForThisMonth = isLast ? (adv.amount - (monthlyAmount * (installments - 1))) : monthlyAmount;
+                  paidAmount += amountForThisMonth;
+                  
+                  if (payrollsCount >= installments) {
+                    break;
+                  }
+                }
+              }
+
+              const remainingAmount = Math.max(0, adv.amount - paidAmount);
+              
+              if (remainingAmount > 0) {
+                // Determine if this is the final installment
+                const isLastInstallment = payrollsCount === installments - 1 || remainingAmount <= monthlyAmount * 1.01;
+
+                if (isLastInstallment) {
+                  cashAdvanceDeduction += remainingAmount;
+                } else {
+                  cashAdvanceDeduction += monthlyAmount;
+                }
+              }
+            }
+          });
+        }
 
         // Check for bonuses in this month
         const empBonus = allBonuses.find(b => b.employeeId === emp.id);
@@ -146,12 +227,16 @@ export function GeneratePayrollTab() {
         });
         const unpaidLeaveDeduction = totalUnpaidDays * dailyWage;
 
-        const netSalary = config.basicSalary + totalAllowances - totalDeductions - attendancePenalties - cashAdvanceDeduction - unpaidLeaveDeduction + bonus;
+        // Deduct social insurance from net salary
+        const netSalary = totalSalary - totalDeductions - attendancePenalties - cashAdvanceDeduction - unpaidLeaveDeduction + bonus - socialInsuranceAmount;
 
         await generatePayroll({
           employeeId: emp.id,
           monthRangeId: selectedMonthRangeId,
-          basicSalary: config.basicSalary,
+          basicSalary: calculatedBasicSalary,
+          increaseAmount,
+          grossSalary,
+          totalSalary,
           totalAllowances,
           totalDeductions,
           attendancePenalties,
@@ -159,7 +244,12 @@ export function GeneratePayrollTab() {
           unpaidLeaveDeduction,
           bonus,
           netSalary,
-          status: 'Draft'
+          status: 'Draft',
+          dailyWage,
+          latePenaltyAmount,
+          absencePenaltyAmount,
+          socialInsuranceAmount,
+          medicalInsuranceAmount
         });
 
         setProgress(prev => ({ ...prev, current: i + 1 }));

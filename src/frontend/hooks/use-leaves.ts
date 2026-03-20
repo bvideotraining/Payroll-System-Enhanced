@@ -9,9 +9,11 @@ import {
   deleteDoc,
   where
 } from 'firebase/firestore';
-import { db } from '@/src/frontend/lib/firebase';
+import { db, handleFirestoreError, OperationType } from '@/src/frontend/lib/firebase';
 import { LeaveRequest, LeaveBalance } from '@/src/frontend/types/leave';
 import { useAuthStore } from '@/src/frontend/store/use-auth-store';
+import { NotificationService } from '@/src/frontend/lib/notification-service';
+import { useEmployees } from './use-employees';
 
 export function useLeaves() {
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
@@ -19,6 +21,7 @@ export function useLeaves() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthStore();
+  const { employees } = useEmployees();
 
   useEffect(() => {
     if (!user) {
@@ -39,9 +42,7 @@ export function useLeaves() {
       setLeaves(recs);
       setLoading(false);
     }, (err) => {
-      console.error("Error fetching leaves:", err);
-      setError(err.message);
-      setLoading(false);
+      handleFirestoreError(err, OperationType.GET, 'leaves');
     });
 
     const unsubscribeBalances = onSnapshot(balancesQuery, (snapshot) => {
@@ -51,7 +52,7 @@ export function useLeaves() {
       });
       setBalances(recs);
     }, (err) => {
-      console.error("Error fetching leave balances:", err);
+      handleFirestoreError(err, OperationType.GET, 'leaveBalances');
     });
 
     return () => {
@@ -63,46 +64,77 @@ export function useLeaves() {
   const addLeave = async (leave: Omit<LeaveRequest, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const newRef = doc(collection(db, 'leaves'));
-      const newLeave: LeaveRequest = {
+      const newLeave: any = {
         ...leave,
         id: newRef.id,
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
+      
+      // Remove undefined fields
+      Object.keys(newLeave).forEach(key => {
+        if (newLeave[key] === undefined) {
+          delete newLeave[key];
+        }
+      });
+
       await setDoc(newRef, newLeave);
-      return newLeave;
+      
+      // Trigger notification
+      const emp = employees.find(e => e.id === leave.employeeId);
+      const empName = emp ? emp.fullName : 'An employee';
+      await NotificationService.notifyLeavePending(empName, leave.leaveType);
+      await NotificationService.notifySystemAdmin('Leave Created', `${empName} requested ${leave.leaveType} leave.`);
+
+      return newLeave as LeaveRequest;
     } catch (err: any) {
-      console.error("Error adding leave:", err);
-      throw err;
+      handleFirestoreError(err, OperationType.CREATE, 'leaves');
     }
   };
 
   const updateLeave = async (id: string, updates: Partial<LeaveRequest>) => {
     try {
       const ref = doc(db, 'leaves', id);
-      await setDoc(ref, { ...updates, updatedAt: Date.now() }, { merge: true });
+      const updateData: any = { ...updates, updatedAt: Date.now() };
+      
+      // Remove undefined fields
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      });
+
+      await setDoc(ref, updateData, { merge: true });
+      await NotificationService.notifySystemAdmin('Leave Updated', `Leave request ${id} was updated.`);
     } catch (err: any) {
-      console.error("Error updating leave:", err);
-      throw err;
+      handleFirestoreError(err, OperationType.UPDATE, `leaves/${id}`);
     }
   };
 
   const deleteLeave = async (id: string) => {
     try {
       await deleteDoc(doc(db, 'leaves', id));
+      await NotificationService.notifySystemAdmin('Leave Deleted', `Leave request ${id} was deleted.`);
     } catch (err: any) {
-      console.error("Error deleting leave:", err);
-      throw err;
+      handleFirestoreError(err, OperationType.DELETE, `leaves/${id}`);
     }
   };
 
   const updateBalance = async (employeeId: string, updates: Partial<LeaveBalance>) => {
     try {
       const ref = doc(db, 'leaveBalances', employeeId);
-      await setDoc(ref, updates, { merge: true });
+      const updateData: any = { ...updates };
+      
+      // Remove undefined fields
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      });
+
+      await setDoc(ref, updateData, { merge: true });
     } catch (err: any) {
-      console.error("Error updating leave balance:", err);
-      throw err;
+      handleFirestoreError(err, OperationType.UPDATE, `leaveBalances/${employeeId}`);
     }
   };
 

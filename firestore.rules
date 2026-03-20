@@ -1,39 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    //
-    // Collection: branches
-    // Fields: name (string)
-    //
-    // Collection: departments
-    // Fields: name (string), type (string)
-    //
-    // Collection: jobTitles
-    // Fields: title (string), type (string), departmentId (string)
-    //
-    // Collection: employees
-    // Fields: fullName, employeeCode, email, phone, branch, department, jobTitle, category, joinDate, status
-    //
-    // Collection: attendance
-    // Fields: employeeId, date, checkIn, checkOut, status, lateMinutes
-    //
-    // Collection: salaryConfigs
-    // Fields: employeeId, basicSalary, allowances (list of maps), deductions (list of maps)
-    //
-    // Collection: cashAdvances
-    // Fields: employeeId, amount, requestDate, status, reason, repaymentMonth
-    //
-    // Collection: payrolls
-    // Fields: employeeId, monthRangeId, basicSalary, totalAllowances, totalDeductions, attendancePenalties, cashAdvanceDeduction, bonus, netSalary, status, generatedAt
-    //
-    // ===============================================================
-
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
     
     function isAuthenticated() {
       return request.auth != null;
@@ -41,28 +8,20 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "bvideotraining@gmail.com" && request.auth.token.email_verified == true));
+        (
+          request.auth.token.email == "bvideotraining@gmail.com" ||
+          request.auth.token.email == "hr.totscollege@gmail.com" ||
+          request.auth.uid == "SqJp1xkt8rZj451ldUPWS3IhyXZ2" ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'System Administrator', 'Admin', 'SYSTEM ADMINISTRATOR'])
+        );
     }
 
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isValidEmail(email) {
-      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-    }
-
-    // ===============================================================
-    // Rules
-    // ===============================================================
-
-    // Default deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Users collection for roles
+    // Users collection
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create, delete: if isAdmin();
@@ -73,7 +32,12 @@ service cloud.firestore {
       );
     }
 
+    // Roles and System Config
     match /roles/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /system/{id} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
@@ -103,10 +67,6 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
-    match /system/{id} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
-    }
 
     // Employee and related data
     match /employees/{id} {
@@ -126,7 +86,7 @@ service cloud.firestore {
       allow write: if isAdmin() || (isAuthenticated() && request.resource.data.employeeId == request.auth.uid);
     }
     match /payrolls/{id} {
-      allow read: if isAuthenticated(); // Employees can see their own, admins see all. Logic simplified for now.
+      allow read: if isAuthenticated(); 
       allow write: if isAdmin();
     }
     match /bonuses/{id} {
@@ -148,6 +108,28 @@ service cloud.firestore {
     match /medical_insurances/{id} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+    }
+    
+    match /salary_increases/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Notifications
+    match /notifications/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // Notification Settings
+    match /notificationSettings/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

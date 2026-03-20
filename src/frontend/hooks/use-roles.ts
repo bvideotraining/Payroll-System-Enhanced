@@ -3,12 +3,27 @@ import { useState, useEffect } from 'react';
 import { collection, doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuthStore } from '../store/use-auth-store';
+import { NotificationService } from '../lib/notification-service';
+
+export interface RolePermission {
+  module: string;
+  view: boolean;
+  create: boolean;
+  edit: boolean;
+  delete: boolean;
+  scope: 'all' | 'branch' | 'department';
+  specificBranch?: string; // Legacy
+  specificDepartment?: string; // Legacy
+  specificBranches?: string[];
+  specificDepartments?: string[];
+}
 
 export interface AppRole {
   id: string;
   name: string;
   description: string;
-  permissions: string[];
+  accessType?: 'full' | 'custom';
+  customPermissions?: RolePermission[];
 }
 
 enum OperationType {
@@ -87,7 +102,10 @@ export function useRoles() {
   const saveRole = async (role: Omit<AppRole, 'id'> & { id?: string }) => {
     try {
       const id = role.id || Date.now().toString();
-      await setDoc(doc(db, 'roles', id), { ...role, id }, { merge: true });
+      // Firestore does not support undefined values, so we strip them out
+      const cleanRole = JSON.parse(JSON.stringify(role));
+      await setDoc(doc(db, 'roles', id), { ...cleanRole, id }, { merge: true });
+      await NotificationService.notifySystemAdmin(role.id ? 'Role Updated' : 'Role Created', `Role ${role.name} was ${role.id ? 'updated' : 'created'}.`);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'roles');
     }
@@ -96,6 +114,7 @@ export function useRoles() {
   const deleteRole = async (id: string) => {
     try {
       await deleteDoc(doc(db, 'roles', id));
+      await NotificationService.notifySystemAdmin('Role Deleted', `Role ${id} was deleted.`);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `roles/${id}`);
     }

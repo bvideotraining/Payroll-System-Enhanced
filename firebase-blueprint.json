@@ -182,7 +182,23 @@
       "properties": {
         "name": { "type": "string" },
         "description": { "type": "string" },
-        "permissions": { "type": "array", "items": { "type": "string" } }
+        "accessType": { "type": "string", "enum": ["full", "custom"] },
+        "customPermissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "module": { "type": "string" },
+              "view": { "type": "boolean" },
+              "create": { "type": "boolean" },
+              "edit": { "type": "boolean" },
+              "delete": { "type": "boolean" },
+              "scope": { "type": "string", "enum": ["all", "branch", "department"] },
+              "specificBranch": { "type": "string" },
+              "specificDepartment": { "type": "string" }
+            }
+          }
+        }
       },
       "required": ["name"]
     },
@@ -197,6 +213,49 @@
         "autoLeaveApproval": { "type": "boolean" }
       },
       "required": ["currency", "standardWorkingHours", "weekendDays", "autoLeaveApproval"]
+    },
+    "SalaryIncrease": {
+      "title": "Salary Increase",
+      "description": "A scheduled or applied salary increase",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "amount": { "type": "number" },
+        "monthRangeId": { "type": "string" },
+        "status": { "type": "string", "enum": ["Scheduled", "Applied"] },
+        "appliedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["employeeId", "amount", "monthRangeId", "status", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "A system notification for a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The recipient user ID" },
+        "role": { "type": "string", "description": "The recipient role (if broadcast)" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "warning", "success", "error"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "number" },
+        "link": { "type": "string" }
+      },
+      "required": ["title", "message", "type", "read", "createdAt"]
+    },
+    "NotificationSettings": {
+      "title": "Notification Settings",
+      "description": "User notification preferences",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "emailNotifications": { "type": "boolean" },
+        "pushNotifications": { "type": "boolean" },
+        "systemNotifications": { "type": "boolean" },
+        "roles": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["userId"]
     }
   },
   "firestore": {
@@ -216,6 +275,11 @@
     "attendanceRules": { "schema": { "type": "object" }, "description": "Attendance rules" },
     "organization": { "schema": { "type": "object" }, "description": "Organization settings" },
     "users": { "schema": "AppUser", "description": "Application users" },
-    "system": { "schema": "SystemConfig", "description": "System configuration" }
+    "system": { "schema": "SystemConfig", "description": "System configuration" },
+    "salary_increases": { "schema": "SalaryIncrease", "description": "Salary increases collection" },
+    "social_insurances": { "schema": { "type": "object" }, "description": "Social insurances collection" },
+    "medical_insurances": { "schema": { "type": "object" }, "description": "Medical insurances collection" },
+    "notifications": { "schema": "Notification", "description": "System notifications" },
+    "notificationSettings": { "schema": "NotificationSettings", "description": "User notification settings" }
   }
 }

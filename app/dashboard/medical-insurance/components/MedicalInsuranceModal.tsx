@@ -259,7 +259,7 @@ export function MedicalInsuranceModal({ insurance, onClose }: MedicalInsuranceMo
                   <Button 
                     type="button" 
                     onClick={handleAddDependent}
-                    className="w-full mt-2 bg-pink-50 hover:bg-pink-100 text-pink-600 font-bold tracking-wide border border-pink-100"
+                    className="w-full mt-2 bg-pink-600 hover:bg-pink-700 text-white font-bold tracking-wide border border-pink-700"
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
                     Add Dependant

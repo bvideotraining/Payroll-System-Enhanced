@@ -151,17 +151,15 @@ export default function MedicalInsurancePage() {
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => handleEdit(insurance)}
-                          className="text-slate-400 hover:text-blue-600 transition-colors"
+                          className="text-blue-600 hover:text-blue-700 transition-colors"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button 
                           onClick={() => {
-                            if (window.confirm('Are you sure you want to delete this record?')) {
-                              deleteMedicalInsurance(insurance.id);
-                            }
+                            deleteMedicalInsurance(insurance.id);
                           }}
-                          className="text-slate-400 hover:text-red-600 transition-colors"
+                          className="text-red-600 hover:text-red-700 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

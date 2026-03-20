@@ -10,9 +10,10 @@ import {
   updateDoc,
   getDoc
 } from 'firebase/firestore';
-import { db } from '@/src/frontend/lib/firebase';
+import { db, handleFirestoreError, OperationType } from '@/src/frontend/lib/firebase';
 import { Employee } from '@/src/frontend/types/employee';
 import { useAuthStore } from '@/src/frontend/store/use-auth-store';
+import { NotificationService } from '@/src/frontend/lib/notification-service';
 
 export function useEmployees() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -36,9 +37,7 @@ export function useEmployees() {
       setEmployees(emps);
       setLoading(false);
     }, (err) => {
-      console.error("Error fetching employees:", err);
-      setError(err.message);
-      setLoading(false);
+      handleFirestoreError(err, OperationType.GET, 'employees');
     });
 
     return () => unsubscribe();
@@ -53,17 +52,19 @@ export function useEmployees() {
         setTimeout(() => reject(new Error('Connection timed out. Please check if Firestore Database is created in your Firebase Console and rules are set.')), 10000)
       );
       
-      const setDocPromise = setDoc(newDocRef, {
+      const cleanEmployeeData = JSON.parse(JSON.stringify({
         ...employeeData,
         createdAt: Date.now(),
         updatedAt: Date.now()
-      });
+      }));
+      
+      const setDocPromise = setDoc(newDocRef, cleanEmployeeData);
 
       await Promise.race([setDocPromise, timeoutPromise]);
+      await NotificationService.notifySystemAdmin('Employee Created', `New employee ${employeeData.fullName} was added.`);
       return newDocRef.id;
     } catch (err: any) {
-      console.error("Error adding employee:", err);
-      throw new Error(err.message || "Failed to add employee");
+      handleFirestoreError(err, OperationType.CREATE, 'employees');
     }
   };
 
@@ -75,15 +76,17 @@ export function useEmployees() {
         setTimeout(() => reject(new Error('Connection timed out. Please check if Firestore Database is created in your Firebase Console and rules are set.')), 10000)
       );
       
-      const updateDocPromise = updateDoc(docRef, {
+      const cleanEmployeeData = JSON.parse(JSON.stringify({
         ...employeeData,
         updatedAt: Date.now()
-      });
+      }));
+      
+      const updateDocPromise = updateDoc(docRef, cleanEmployeeData);
 
       await Promise.race([updateDocPromise, timeoutPromise]);
+      await NotificationService.notifySystemAdmin('Employee Updated', `Employee ${id} was updated.`);
     } catch (err: any) {
-      console.error("Error updating employee:", err);
-      throw new Error(err.message || "Failed to update employee");
+      handleFirestoreError(err, OperationType.UPDATE, `employees/${id}`);
     }
   };
 
@@ -94,9 +97,10 @@ export function useEmployees() {
       );
       const deleteDocPromise = deleteDoc(doc(db, 'employees', id));
       await Promise.race([deleteDocPromise, timeoutPromise]);
+      
+      await NotificationService.notifySystemAdmin('Employee Deleted', `Employee ${id} was deleted.`);
     } catch (err: any) {
-      console.error("Error deleting employee:", err);
-      throw new Error(err.message || "Failed to delete employee");
+      handleFirestoreError(err, OperationType.DELETE, `employees/${id}`);
     }
   };
 
@@ -115,8 +119,8 @@ export function useEmployees() {
       }
       return null;
     } catch (err: any) {
-      console.error("Error getting employee:", err);
-      throw new Error(err.message || "Failed to get employee");
+      handleFirestoreError(err, OperationType.GET, `employees/${id}`);
+      return null;
     }
   }, []);
 
