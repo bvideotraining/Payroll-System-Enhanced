@@ -186,29 +186,33 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-        <div className="border-b border-slate-200">
-          <nav className="-mb-px flex overflow-x-auto" aria-label="Tabs">
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex min-h-[600px]">
+        {/* Left Sidebar */}
+        <div className="w-56 bg-blue-800 flex-shrink-0">
+          <div className="p-4 border-b border-blue-700/50">
+            <h2 className="text-white font-semibold text-sm">Settings Menu</h2>
+          </div>
+          <nav className="flex flex-col p-2 gap-1" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('users')}
-              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-[11px] font-medium transition-colors text-left ${
                 activeTab === 'users'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ? 'bg-blue-900 text-white shadow-sm'
+                  : 'text-blue-100 hover:bg-blue-700 hover:text-white'
               }`}
             >
-              <Users className="h-4 w-4" />
+              <Users className="h-4 w-4 shrink-0" />
               System Users
             </button>
             <button
               onClick={() => setActiveTab('roles')}
-              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-[11px] font-medium transition-colors text-left ${
                 activeTab === 'roles'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ? 'bg-blue-900 text-white shadow-sm'
+                  : 'text-blue-100 hover:bg-blue-700 hover:text-white'
               }`}
             >
-              <Shield className="h-4 w-4" />
+              <Shield className="h-4 w-4 shrink-0" />
               Roles
             </button>
             <button
@@ -216,63 +220,64 @@ export default function SettingsPage() {
                 setActiveTab('system');
                 setConfigForm(config);
               }}
-              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-[11px] font-medium transition-colors text-left ${
                 activeTab === 'system'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ? 'bg-blue-900 text-white shadow-sm'
+                  : 'text-blue-100 hover:bg-blue-700 hover:text-white'
               }`}
             >
-              <SettingsIcon className="h-4 w-4" />
+              <SettingsIcon className="h-4 w-4 shrink-0" />
               System Configurations
             </button>
             <button
               onClick={() => setActiveTab('auth')}
-              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-[11px] font-medium transition-colors text-left ${
                 activeTab === 'auth'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ? 'bg-blue-900 text-white shadow-sm'
+                  : 'text-blue-100 hover:bg-blue-700 hover:text-white'
               }`}
             >
-              <Key className="h-4 w-4" />
+              <Key className="h-4 w-4 shrink-0" />
               Auth Settings
             </button>
             <button
               onClick={() => setActiveTab('backup')}
-              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-[11px] font-medium transition-colors text-left ${
                 activeTab === 'backup'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ? 'bg-blue-900 text-white shadow-sm'
+                  : 'text-blue-100 hover:bg-blue-700 hover:text-white'
               }`}
             >
-              <Database className="h-4 w-4" />
+              <Database className="h-4 w-4 shrink-0" />
               Backup & Restore
             </button>
             <button
               onClick={() => setActiveTab('notifications')}
-              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-[11px] font-medium transition-colors text-left ${
                 activeTab === 'notifications'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ? 'bg-blue-900 text-white shadow-sm'
+                  : 'text-blue-100 hover:bg-blue-700 hover:text-white'
               }`}
             >
-              <Bell className="h-4 w-4" />
+              <Bell className="h-4 w-4 shrink-0" />
               Notification Settings
             </button>
             <button
               onClick={() => setActiveTab('reset')}
-              className={`whitespace-nowrap py-3 px-4 text-center border-b-2 font-medium text-[11px] flex items-center justify-center gap-2 ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-[11px] font-medium transition-colors text-left mt-4 ${
                 activeTab === 'reset'
-                  ? 'border-red-500 text-red-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'text-red-200 hover:bg-red-500/20 hover:text-red-100'
               }`}
             >
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="h-4 w-4 shrink-0" />
               System Reset
             </button>
           </nav>
         </div>
 
-        <div className="p-4">
+        {/* Main Content */}
+        <div className="flex-1 p-6 overflow-y-auto bg-slate-50/50">
           {activeTab === 'users' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
