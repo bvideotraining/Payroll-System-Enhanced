@@ -25,6 +25,13 @@ export function SalaryConfigTab() {
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [selectedMonthRangeId, setSelectedMonthRangeId] = useState('');
+  const [configToDelete, setConfigToDelete] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{title: string, type: 'success' | 'error'} | null>(null);
+
+  const showToast = (title: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ title, type });
+    setTimeout(() => setToastMessage(null), 3000);
+  };
   
   const [editingConfig, setEditingConfig] = useState<Omit<SalaryConfig, 'id'>>({
     employeeId: '',
@@ -165,7 +172,7 @@ export function SalaryConfigTab() {
       }
   
       setEditingConfig({ ...editingConfig, deductions: newDeductions });
-      alert('Deductions imported successfully.');
+      showToast('Deductions imported successfully.', 'success');
     };
 
   const handleRemoveDeduction = (index: number) => {
@@ -176,7 +183,7 @@ export function SalaryConfigTab() {
 
   const handleImportBonuses = async () => {
     if (!selectedEmployeeId || !selectedMonthRangeId) {
-      alert('Please select both an employee and a month');
+      showToast('Please select both an employee and a month', 'error');
       return;
     }
     try {
@@ -187,7 +194,7 @@ export function SalaryConfigTab() {
       );
       const snapshot = await getDocs(q);
       if (snapshot.empty) {
-        alert('No bonus record found for this employee in the selected month.');
+        showToast('No bonus record found for this employee in the selected month.', 'error');
         return;
       }
       
@@ -219,16 +226,16 @@ export function SalaryConfigTab() {
         allowances: newAllowances,
         totalSalary: (editingConfig.grossSalary || 0) + totalAllowances
       });
-      alert('Allowances imported from the latest bonus record.');
+      showToast('Allowances imported from the latest bonus record.', 'success');
     } catch (error) {
       console.error('Error importing bonuses:', error);
-      alert('Failed to import bonuses.');
+      showToast('Failed to import bonuses.', 'error');
     }
   };
 
   const handleSave = async () => {
     if (!selectedEmployeeId || !selectedMonthRangeId) {
-      alert('Please select both an employee and a month');
+      showToast('Please select both an employee and a month', 'error');
       return;
     }
     try {
@@ -236,10 +243,10 @@ export function SalaryConfigTab() {
         ...editingConfig,
         monthRangeId: selectedMonthRangeId
       });
-      alert('Salary configuration saved successfully');
+      showToast('Salary configuration saved successfully', 'success');
     } catch (error) {
       console.error('Error saving salary config:', error);
-      alert('Failed to save salary configuration');
+      showToast('Failed to save salary configuration', 'error');
     }
   };
 
@@ -261,17 +268,22 @@ export function SalaryConfigTab() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDeleteConfig = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this configuration?')) return;
+  const handleDeleteConfig = (id: string) => {
+    setConfigToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!configToDelete) return;
     try {
-      await deleteSalaryConfig(id);
-      if (selectedEmployeeId && salaryConfigs.find(c => c.id === id)?.employeeId === selectedEmployeeId) {
+      await deleteSalaryConfig(configToDelete);
+      if (selectedEmployeeId && salaryConfigs.find(c => c.id === configToDelete)?.employeeId === selectedEmployeeId) {
         // Reset form if deleted config was the one being edited
         handleSelectEmployee(selectedEmployeeId);
       }
+      setConfigToDelete(null);
     } catch (error) {
       console.error('Error deleting salary config:', error);
-      alert('Failed to delete salary configuration');
+      setConfigToDelete(null);
     }
   };
 
@@ -634,6 +646,41 @@ export function SalaryConfigTab() {
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {configToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Delete Configuration</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              Are you sure you want to delete this salary configuration? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setConfigToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={confirmDelete}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-sm font-medium text-white transition-opacity z-50 ${
+          toastMessage.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+        }`}>
+          {toastMessage.title}
+        </div>
+      )}
     </div>
   );
 }
